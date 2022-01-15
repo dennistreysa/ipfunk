@@ -1,5 +1,5 @@
 var filter = [ "<all_urls>" ];
-var possibleHeaders = ["X-Forwarded-For", "Client-Ip", "Via"];
+var possibleHeaders = ["X-Forwarded-For", "X-Originating-IP", "X-Remote-IP", "X-Remote-Addr", "Client-Ip", "Via"];
 
 var enabled = false;
 var headers = [];
@@ -11,121 +11,212 @@ var list = [[0,0,0,0], [1,1,1,1]];
 var whitelist = [];
 
 
-function generateIp() {
-	if (behaviour == "range") {
-		var ip = Array();
-		for (var i=0; i<4; i++) {
-			ip[i] = Math.floor(Math.random()*range_to[i]+range_from[i]);
-		}
-		return ip.join(".");
-	}
-	else {
-		return list[Math.floor(Math.random()*list.length)].join(".");
-	}
+function filterStringArray ( array )
+{
+    let newArray = [];
+
+    for ( let element of array )
+    {
+        let trimmed = element.trim();
+
+        if ( trimmed )
+        {
+            newArray.push( trimmed );
+        }
+        else
+        {
+            /** Don't add */
+        }
+    }
+
+    return newArray;
 }
 
-function handleBeforeSendHeaders(data) {
-	if (!enabled) {
-		return {};
-	}
-	for (var r in whitelist) {
-		if (data.url.match(whitelist[r])) {
-			return;
-		}
-	}
-	var xdata=data.requestHeaders;
-	var value = 0;
-	for (var h in headers) {
-		if (!(sync && (value != 0))) {
-			value = generateIp();
-		}
-		xdata.push({
-			"name": headers[h],
-			"value": value
-		});
-	}
-	return {requestHeaders: xdata};
+
+function stringifyIp ( ip )
+{
+    return ip[0] + "." + ip[1] + "." + ip[2] + "." + ip[3]
 }
 
-function registerListener() {
-	chrome.webRequest.onBeforeSendHeaders.addListener(
-		handleBeforeSendHeaders,
-		{urls:filter},
-		["blocking","requestHeaders"]
-	);
-	console.log("registered listener.");
+
+function generateIp ()
+{
+    if ( behaviour == "range" )
+    {
+        var ip = Array();
+        
+        for ( var i = 0; i < 4; i++ )
+        {
+            ip[i] = Math.floor( Math.random() * range_to[i] + range_from[i] );
+        }
+        
+        return ip;
+    }
+    else
+    {
+        return list[Math.floor(Math.random()*list.length)];
+    }
 }
 
-function removeListener() {
-	chrome.webRequest.onBeforeSendHeaders.removeListener(
-		handleBeforeSendHeaders);
-	console.log("removed listener.");
+
+function handleBeforeSendHeaders (data)
+{
+    
+    if ( !enabled || (0 == headers.length) )
+    {
+        return {};
+    }
+    
+    for ( let r in whitelist )
+    {
+        if ( data.url.match(whitelist[r]) )
+        {
+            return {};
+        }
+    }
+    
+    let xdata = data.requestHeaders;
+    let value = 0;
+
+    for ( let h of headers )
+    {
+        if ( !sync || (value == 0) )
+        {
+            value = stringifyIp( generateIp() );
+        }
+        
+        xdata.push({
+            "name": h,
+            "value": value
+        });
+    }
+    
+    return { requestHeaders: xdata };
 }
 
-function reload() {
-	// simply re-register listener
-	removeListener();
-	registerListener();
-	console.log("reload done.");
+
+function registerListener ()
+{
+    chrome.webRequest.onBeforeSendHeaders.addListener( handleBeforeSendHeaders, {urls:filter}, ["blocking","requestHeaders"] );
 }
 
-function loadDefaultSettings() {
-	localStorage["enabled"] = false;
-	localStorage["filter"] = "<all_urls>";
-	localStorage["headers"] = "X-Forwarded-For";
-	localStorage["behaviour"] = "range";
-	localStorage["sync"] = true;
-	localStorage["range_from"] = "0.0.0.0";
-	localStorage["range_to"] = "255.255.255.255";
-	localStorage["list"] = "0.0.0.0;1.1.1.1";
-	localStorage["whitelist"] = "http://ignore_this_domain.com/.*";
-	loadSettings();
+
+function removeListener ()
+{
+    chrome.webRequest.onBeforeSendHeaders.removeListener( handleBeforeSendHeaders );
 }
 
-function loadSettings() {
-	try {
-		enabled = localStorage["enabled"];
-		filter = localStorage["filter"].split(";");
-		headers = localStorage["headers"].split(";");
-		behaviour = localStorage["behaviour"];
-		sync = localStorage["sync"];
-		range_from = localStorage["range_from"].split(".");
-		range_to = localStorage["range_to"].split(".");
-		
-		list = Array();
-		var lslist = localStorage["list"].split(";");
-		for (var i=0; i<lslist.length; i++) {
-			list.push(lslist[i].split("."));
-		}
-		whitelist = localStorage["whitelist"].split(";");
-	} catch(e) {
-		// load defaults
-		console.log("resettings config ("+e+")");
-		loadDefaultSettings();
-	}
+
+function loadDefaultSettings (callback=null)
+{
+    try
+    {
+        chrome.storage.local.set({
+            "enabled": false,
+            "filter": [ "<all_urls>" ],
+            "headers": [ "X-Forwarded-For" ],
+            "behaviour": "range",
+            "sync": true,
+            "range_from": [0, 0, 0, 0],
+            "range_to": [255, 255, 255, 255],
+            "list": [[0, 0, 0, 0], [1, 1, 1, 1]],
+            "whitelist": [ "http://ignore_this_domain.com/.*" ]
+        }, function(){
+            /** Apply the settings */
+            loadSettings(callback);
+        });
+    }
+    catch(e)
+    {
+        console.log("Could not load default settings: " + e);
+    }
 }
 
-function saveSettings() {
-	localStorage["enabled"] = enabled;
-	localStorage["filter"] = filter.join(";");
-	localStorage["headers"] = headers.join(";");
-	localStorage["behaviour"] = behaviour;
-	localStorage["sync"] = sync;
-	localStorage["range_from"] = range_from.join(".");
-	localStorage["range_to"] = range_to.join(".");
-	localStorage["list"] = "";
-	for (var i=0; i<list.length; i++) {
-		localStorage["list"] += list[i].join(".")+";";
-	}
-	localStorage["whitelist"] = whitelist.join(";");
+
+function loadSettings (callback=null)
+{
+    try
+    {
+        chrome.storage.local.get(["enabled", "filter", "headers", "behaviour", "sync", "range_from", "range_to", "list", "whitelist"], function(items)
+        {
+            try
+            {
+                enabled = items["enabled"];
+                filter = filterStringArray( items["filter"] );
+                headers = filterStringArray( items["headers"] );
+                behaviour = items["behaviour"];
+                sync = items["sync"];
+                range_from = items["range_from"];
+                range_to = items["range_to"];
+                list = items["list"];
+                whitelist = filterStringArray( items["whitelist"] );
+
+                applySettings();
+
+
+                /** Update Icon */
+                if ( enabled )
+                {
+                    chrome.browserAction.setIcon({path: "/assets/favicon-32x32.png"});
+                }
+                else
+                {
+                    chrome.browserAction.setIcon({path: "/assets/favicon-32x32-off.png"});
+                }
+
+                if ( callback )
+                {
+                    callback();
+                }
+            }
+            catch(e)
+            {
+                loadDefaultSettings();
+            }
+        });
+
+    }
+    catch(e)
+    {
+        /** load defaults */
+        console.log("resettings config ("+e+")");
+        loadDefaultSettings();
+    }
 }
 
-function applySettings() {
-	removeListener();
-	if (enabled) {
-		registerListener();
-	}
+
+function saveSettings ()
+{
+    try
+    {
+        chrome.storage.local.set({
+            "enabled": enabled,
+            "filter": filter,
+            "headers": headers,
+            "behaviour": behaviour,
+            "sync": sync,
+            "range_from": range_from,
+            "range_to": range_to,
+            "list": list,
+            "whitelist": whitelist
+        }, function(){ });
+    }
+    catch(e)
+    {
+        console.log("Could not save settings: " + e);
+    }
 }
+
+
+function applySettings()
+{
+    removeListener();
+    
+    if ( enabled )
+    {
+        registerListener();
+    }
+}
+
 
 loadSettings();
-applySettings();

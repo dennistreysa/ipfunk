@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 	<head>
-		<title>IPFuck</title>
+		<title>IPFunk</title>
 		<style>
 			body {
 				min-width: 450px;
@@ -10,14 +10,20 @@
 		</style>
 	</head>
 	<body>
-		<h2>IPFuck</h2>
+		<h2>IPFunk</h2>
 		<form id="form">
 			<label><input type="checkbox" id="enabled" />
-					Enable IPFuck</label>
+					Enable IPFunk</label>
 			<fieldset>
 				<legend>Headers to overwrite</legend>
 				<label><input type="checkbox" id="header-X-Forwarded-For" />
 					X-Forwarded-For</label><br />
+				<label><input type="checkbox" id="header-X-Originating-IP" />
+					X-Originating-IP</label><br />
+				<label><input type="checkbox" id="header-X-Remote-IP" />
+					X-Remote-IP</label><br />
+				<label><input type="checkbox" id="header-X-Remote-Addr" />
+					X-Remote-Addr</label><br />
 				<label><input type="checkbox" id="header-Client-Ip" />
 					Client-Ip</label><br />
 				<label><input type="checkbox" id="header-Via" />
@@ -53,11 +59,13 @@
 				<legend>Whitelist (one host per line)</legend>
 				<textarea id="whitelist" rows="5"></textarea>
 			</fieldset>
-			<input type="submit" value="save&amp;apply" />
+			<input type="submit" value="Save &amp; Apply" />
 			<p id="status"></p>
 		</form>
-		<p style="text-align: right">IPFuck for Chromium - Xa &lt;xa@xomg.net&gt;<br />
-			<a href="http://ipfuck.paulds.fr/">IPFuck</a> | <a id="reset-config" href="#">default settings</a></p>
+		<p style="text-align: right">v2.0</p>
+		<p style="text-align: right">IPFunk for Chromium<br />
+			<a id="reset-config" href="#">default settings</a></p>
+		<p style="text-align: right">IPFunk was originally created by Paul Da Silva as 'IPFuck'</p>
 		<script src="popup.js"></script>
 	</body>
 </html>

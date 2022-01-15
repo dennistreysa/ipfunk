@@ -1,14 +1,24 @@
 {
-	"name": "IPFuck",
-	"version": "1.1",
 	"manifest_version": 2,
-	"description": "IPFuck for Chromium.",
+	
+	"name": "IPFunk",
+	"version": "2.0",
+	"author": "dennistreysa",
+
+	"description": "Sends forged IP headers to websites.",
+	"icons": { "16": "assets/favicon-16x16.png",
+               "48": "assets/favicon-32x32.png",
+               "128": "assets/favicon-96x96.png" },
+	
 	"browser_action": {
-		"default_icon": "icon.png",
+		"default_icon": "assets/favicon-32x32.png",
+		"default_title": "Settings",
 		"default_popup": "popup.html"
 	},
+	
 	"background": {
 		"scripts": [ "background.js" ]
 	},
-	"permissions": [ "tabs", "http://*/*", "https://*/*", "webRequest", "webRequestBlocking" ]
+	
+	"permissions": [ "tabs", "http://*/*", "https://*/*", "webRequest", "webRequestBlocking", "storage" ]
 }
