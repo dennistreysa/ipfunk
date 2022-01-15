@@ -1,5 +1,5 @@
 var filter = [ "<all_urls>" ];
-var possibleHeaders = ["X-Forwarded-For", "X-Originating-IP", "X-Remote-IP", "X-Remote-Addr", "Client-Ip", "Via"];
+var possibleHeaders = ["X-Forwarded-For", "X-Originating-IP", "X-Remote-IP", "X-Remote-Addr", "X-Real-IP", "Client-Ip", "Via"];
 
 var enabled = false;
 var headers = [];
@@ -44,10 +44,10 @@ function generateIp ()
     if ( behaviour == "range" )
     {
         var ip = Array();
-        
+
         for ( var i = 0; i < 4; i++ )
         {
-            ip[i] = Math.floor( Math.random() * range_to[i] + range_from[i] );
+            ip[i] = Math.floor(Math.random()*(range_to[i]-range_from[i]+1)+range_from[i]);
         }
         
         return ip;
