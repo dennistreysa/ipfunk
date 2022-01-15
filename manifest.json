@@ -2,7 +2,7 @@
 	"manifest_version": 2,
 	
 	"name": "IPFunk",
-	"version": "2.0",
+	"version": "2.0.1",
 	"author": "dennistreysa",
 
 	"description": "Sends forged IP headers to websites.",
